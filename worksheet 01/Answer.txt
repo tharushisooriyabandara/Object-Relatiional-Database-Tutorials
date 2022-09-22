@@ -1,0 +1,115 @@
+-- create client table --
+create table client (
+    clno char (3),
+    name varchar (12),
+    address varchar (30),
+    constraint client_pk primary key (clno)
+);
+
+-- create stock table --
+create table stock (
+    company char (7),
+    price number (6,2),
+    dividend number (4,2),
+    eps number (4,2),
+    constraint stock_pk primary key (company)
+);
+
+-- create trading table --
+create table trading (
+    company char (7),
+    exchange varchar (12),
+    constraint trading_pk primary key (company, exchange),
+    constraint trading_fk foreign key (company) references stock
+);
+
+--- create purchase table --
+create table purchase (
+    clno char (3),
+    company char (7),
+    pdate date,
+    qty number (6),
+    price number (6,2),
+    constraint purchase_pk primary key (clno, company, pdate),
+    constraint purchase_fk foreign key (clno) references client,
+    constraint purchase_fk2 foreign key (company) references stock
+);
+
+-- insert values into client table --
+insert into client values ('c01', 'John Smith' , '3 East Av Bentley, WA 6102');
+insert into client values ('c02' , 'Jill Brody' , '42 Bent St Perth, WA 6001');
+
+
+-- insert values into stock table --
+insert into stock values ('BHP' , 10.50 , 1.50 , 3.20);
+insert into stock values ('IBM' , 70.00 , 4.25 , 10.00);
+insert into stock values ('INTEL' , 76.50 , 5.00 , 12.40);
+insert into stock values ('FORD' , 40.00 , 2.00 , 8.50);
+insert into stock values ('GM' , 60.00 , 2.50 , 9.20);
+insert into stock values ('INFOSYS' , 45.00 , 3.00 , 7.80);
+
+
+-- insert values into trading table --
+insert into trading values ('BHP' , 'Sydney');
+insert into trading values ('BHP' , 'New York');
+insert into trading values ('IBM' , 'New York');
+insert into trading values ('IBM' , 'London');
+insert into trading values ('IBM' , 'Tokyo');
+insert into trading values ('INTEL' , 'New York');
+insert into trading values ('INTEL' , 'London');
+insert into trading values ('FORD' , 'New York');
+insert into trading values ('GM' , 'New York');
+insert into trading values ('INFOSYS' , 'New York');
+
+
+-- insert values into purchase table --
+insert into purchase values ('c01' , 'BHP' , date '2001-10-02' , 1000 , 12.00);
+insert into purchase values ('c01' , 'BHP' , date '2002-06-08' , 2000 , 10.50);
+insert into purchase values ('c01' , 'IBM' ,  date '2000-02-12' , 500  , 58.00);
+insert into purchase values ('c01' , 'IBM'  ,  date '2001-04-10' , 1200 , 65.00);
+insert into purchase values ('c01' , 'INFOSYS' ,  date '2001-08-11' , 1000 , 64.00);
+insert into purchase values ('c02' , 'INTEL'  ,  date '2000-01-30' , 300  , 35.00);
+insert into purchase values ('c02' , 'INTEL'  ,  date '2001-01-03' , 400  , 54.00);
+insert into purchase values ('c02' , 'INTEL'  ,  date '2001-10-02' , 200  , 60.00);
+insert into purchase values ('c02' , 'FORD'  ,  date '1999-10-05' , 300  , 40.00);
+insert into purchase values ('c02' , 'GM'  ,  date '2000-12-12' , 500  , 55.50);
+
+
+-- (a) --
+select distinct c.name, s.company, s.price, s.dividend, s.eps
+from client c, stock s, purchase p
+where c.clno=p.clno and s.company=p.company
+order by c.name
+
+-- (b) --
+select c.name, s.company, sum (p.qty*p.price) / sum (p.qty) as avg_purchase_price
+from client c, stock s, purchase p
+where c.clno=p.clno and s.company=p.company
+group by c.name, p.company
+order by c.name
+
+-- (c) --
+select s.company, c.name, sum (p.qty*s.price) as current_value
+from client c, stock s, purchase p, trading t
+where t.exchange='New York'  and c.clno=p.clno and s.company=p.company and s.company=t.company
+group by s.company, c.name
+order by s.company
+
+-- (d) --
+select c.name, sum (p.qty*p.price) as total_price
+from client c, purchase p
+where c.clno=p.clno
+group by c.name
+order by c.name
+
+-- (e) --
+select c.name, sum (p.qty*s.price) - sum (p.qty*p.price) as book_profit
+from client c, stock s, purchase p
+where c.clno=p.clno and s.company=p.company
+group by c.name
+order by c.name
+
+
+
+
+
