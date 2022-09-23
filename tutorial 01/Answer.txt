@@ -1,0 +1,83 @@
+-- create dept type --
+create type dept_t;
+
+-- create emp type object --
+create type Emp_t as object (
+    eno number (4),
+    ename varchar2 (15),
+    edept ref dept_t,
+    salary number (8,2)
+);
+
+-- create dept type object --
+create type Dept_t as object (
+    dno number (2),
+    dname varchar2 (12),
+    mgr ref Emp_t
+);
+
+-- create proj type object --
+create type Proj_t as object (
+    pno number (4),
+    pname varchar2 (15),
+    pdept ref Dept_t,
+    budget number (10,2)
+);
+
+-- create emp table --
+create table Emp of Emp_t (
+    constraint emp_pk primary key (eno)
+);
+
+-- create dept table --
+create table Dept of Dept_t ( 
+    constraint dept_pk primary key (dno),
+    constraint dept_fk foreign key (mgr) references Emp
+);
+
+-- create proj table --
+create table Proj of Proj_t (
+    constraint proj_p primary key (pno),
+    constraint proj_fk foreign key (pdept) references Dept
+);
+
+-- table emp altered --
+alter table Emp add constraint emp_fk foreign key (edept) references Dept;
+
+-- (a) --
+select d.dno, d.mgr.ename, d.mgr.salary
+from Dept d
+
+-- (b) --
+select p.pname, p.pdept.mgr.ename
+from Proj p
+where p.budget>50000 
+
+-- (c) --
+select p.pdept.dno, p.pdept.dname, sum (p.budget)
+from Proj p
+group by p.pdept.dno, p.pdept.dname
+
+-- (d) --
+select p.pdept.mgr.ename
+from Proj p
+where p.budget = (
+    select max (p.budget)
+    from Proj p
+);
+
+-- (e) --
+select p.pdept.mgr.eno, sum (p.budget)
+from Proj p
+group by p.pdept.mgr.eno
+having sum(p.budget) > '$60,000'
+
+-- (f) --
+select p.pdept.mgr.eno, sum (p.budget)
+from Proj p
+group by p.pdept.mgr.eno
+having sum (p.budget) = (
+    select max (sum (p.budget))
+    from Proj p
+    group by p.pdept.mgr.eno
+);
